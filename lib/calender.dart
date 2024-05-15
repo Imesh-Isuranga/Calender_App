@@ -1,3 +1,4 @@
+import 'package:calender_app/event.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -10,6 +11,11 @@ class Calender extends StatefulWidget {
 
 class _CalenderState extends State<Calender> {
   DateTime today = DateTime.now();
+  TimeOfDay selectedTime = TimeOfDay.now();
+  TimeOfDay? timeOfDay;
+
+  TextEditingController _eventController = TextEditingController();
+  Map<DateTime, List<Event>> events = {};
 
   void _onDaySelected(DateTime day, DateTime focusDay) {
     setState(() {
@@ -23,6 +29,40 @@ class _CalenderState extends State<Calender> {
       appBar: AppBar(
         title: Text('Xibet Calender'),
       ),
+      floatingActionButton: FloatingActionButton(onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              scrollable: true,
+              title: Text('Event Creator'),
+              content: Padding(
+                padding: EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _eventController,
+                    ),
+                    ElevatedButton(
+                        onPressed: () async {
+                          timeOfDay = await showTimePicker(
+                              context: context,
+                              initialTime: selectedTime,
+                              initialEntryMode: TimePickerEntryMode.dial);
+                        },
+                        child: Text('Choose Time'))
+                  ],
+                ),
+              ),
+              actions: [
+                ElevatedButton(onPressed: () {
+                  
+                }, child: Text('Submit'))
+              ],
+            );
+          },
+        );
+      }),
       body: Container(
           child: Column(
         children: [
@@ -45,5 +85,3 @@ class _CalenderState extends State<Calender> {
     );
   }
 }
-
-
