@@ -25,7 +25,8 @@ class _CalenderState extends State<Calender> {
   List<String> dateString = [];
   List<String> timeString = [];
   List<String> dateStringHolidays = [];
-
+  DateFormat dateFormat = DateFormat("yyyy-MM-dd");
+  DateFormat timeFormat = DateFormat("HH:mm");
   final TextEditingController _eventController = TextEditingController();
   Map<DateTime, List<Event>> events = {};
 
@@ -59,16 +60,16 @@ class _CalenderState extends State<Calender> {
     prefs.setStringList('myStringList', list);
   }
 
-  void addList() {
+  void addList(String label) {
+    String temp = _eventController.text;
     setState(() {
-      DateTime dateTime = selectedDateTime; // your dateTime object
-      DateFormat dateFormat =
-          DateFormat("yyyy-MM-dd"); // how you want it to be formatted
-      DateFormat timeFormat =
-          DateFormat("HH:mm"); // how you want it to be formatted
-      String date = dateFormat.format(dateTime); // format it
-      String time = timeFormat.format(dateTime); // format it
-      stringList.add('$date | $time - ${_eventController.text}');
+      if (temp.trim().isEmpty) {
+        temp = 'Task';
+      }
+      DateTime dateTime = selectedDateTime;
+      String date = dateFormat.format(dateTime);
+      String time = timeFormat.format(dateTime);
+      stringList.add('$date | $time - ${temp} - $label');
       dateString.add(date);
       timeString.add(time);
       _saveStringList(stringList, dateString, timeString);
@@ -82,25 +83,20 @@ class _CalenderState extends State<Calender> {
     for (var date in copyDateString) {
       DateTime day = DateTime.parse(date);
 
-      DateFormat dateFormat = DateFormat("yyyy-MM-dd");
-      DateFormat timeFormat = DateFormat("HH:mm");
-
       String nowDate = dateFormat.format(now);
-
       DateTime nowDate1 = DateTime.parse(nowDate);
       i++;
-      if (nowDate1.isBefore(day) || nowDate1.isAtSameMomentAs(day)) {
+      if (nowDate1.isAfter(day)) {
+        _removeItemFromList(i);
+        i--;
+      } else if (nowDate1.isAtSameMomentAs(day)) {
         DateTime time1 = timeFormat.parse(timeString[i]);
         if (now.hour > (time1.hour)) {
-          stringList.removeAt(i);
-          dateString.removeAt(i);
-          timeString.removeAt(i);
+          _removeItemFromList(i);
           i--;
           _saveStringList(stringList, dateString, timeString);
         } else if (now.hour == (time1.hour) && now.minute > (time1.minute)) {
-          stringList.removeAt(i);
-          dateString.removeAt(i);
-          timeString.removeAt(i);
+          _removeItemFromList(i);
           i--;
           _saveStringList(stringList, dateString, timeString);
         } else {}
@@ -108,9 +104,28 @@ class _CalenderState extends State<Calender> {
     }
   }
 
+  void _removeItemFromList(int i) {
+    stringList.removeAt(i);
+    dateString.removeAt(i);
+    timeString.removeAt(i);
+  }
+
   void _onDaySelected(DateTime day, DateTime focusDay) {
     setState(() {
       selectedDateTime = day;
+    });
+  }
+
+  void _calculateDif() {
+    setState(() {
+      DateTime now = DateTime.now();
+      // Calculate the difference in seconds
+      Duration difference = selectedDateTime.difference(now);
+      // Get the difference in seconds
+      secondsDifferencefor_15min = difference.inSeconds - (15 * 60);
+      secondsDifferencefor_1h = difference.inSeconds - (60 * 60);
+      secondsDifferencefor_1d = difference.inSeconds - (60 * 60 * 24);
+      secondsDifferencefor_ontime = difference.inSeconds;
     });
   }
 
@@ -135,6 +150,10 @@ class _CalenderState extends State<Calender> {
 
   @override
   void initState() {
+    //stringList.clear();
+    //dateString.clear();
+    //timeString.clear();
+    //_saveStringList(stringList, dateString, timeString);
     _loadStringList();
     super.initState();
   }
@@ -147,16 +166,16 @@ class _CalenderState extends State<Calender> {
           'Xibet Calender',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: const Color.fromARGB(255, 15, 3, 66),
+        backgroundColor: const Color.fromARGB(255, 9, 6, 94),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color.fromARGB(255, 162, 19, 19),
         onPressed: () {
           showDialog(
             context: context,
             builder: (context) {
               return AlertDialog(
                 scrollable: true,
-                title: const Text('Event Creator'),
                 content: Padding(
                   padding: const EdgeInsets.all(8),
                   child: Column(
@@ -164,8 +183,8 @@ class _CalenderState extends State<Calender> {
                       const Text(
                         'Task',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       TextField(
@@ -192,21 +211,8 @@ class _CalenderState extends State<Calender> {
                                 selectedTime!.hour,
                                 selectedTime!.minute,
                               );
-
-                              DateTime now = DateTime.now();
-                              // Calculate the difference in seconds
-                              Duration difference =
-                                  selectedDateTime.difference(now);
-                              // Get the difference in seconds
-                              secondsDifferencefor_15min =
-                                  difference.inSeconds - (15 * 60);
-                              secondsDifferencefor_1h =
-                                  difference.inSeconds - (60 * 60);
-                              secondsDifferencefor_1d =
-                                  difference.inSeconds - (60 * 60 * 24);
-                              secondsDifferencefor_ontime =
-                                  difference.inSeconds;
                             });
+                            _calculateDif();
                           }
                         },
                         child: const Text('Choose Time'),
@@ -223,13 +229,13 @@ class _CalenderState extends State<Calender> {
                             id: id,
                             title: "Xibet",
                             body: _eventController.text,
-                            duration: secondsDifferencefor_15min <= 0
-                                ? secondsDifferencefor_15min = 0
-                                : secondsDifferencefor_15min,
+                            duration: secondsDifferencefor_15min,
                             payload: "This is schedule data",
                           );
-                          addList();
-                          checkNotified();
+                          if (secondsDifferencefor_15min > 5) {
+                            addList('15 mins before');
+                            checkNotified();
+                          }
                           _eventController.clear();
                           Navigator.pop(context);
                         },
@@ -241,13 +247,13 @@ class _CalenderState extends State<Calender> {
                             id: id,
                             title: "Xibet",
                             body: _eventController.text,
-                            duration: secondsDifferencefor_1h <= 0
-                                ? secondsDifferencefor_1h = 0
-                                : secondsDifferencefor_1h,
+                            duration: secondsDifferencefor_1h,
                             payload: "This is schedule data",
                           );
-                          addList();
-                          checkNotified();
+                          if (secondsDifferencefor_1h > 5) {
+                            addList('1 hour before');
+                            checkNotified();
+                          }
                           _eventController.clear();
                           Navigator.pop(context);
                         },
@@ -259,13 +265,13 @@ class _CalenderState extends State<Calender> {
                             id: id,
                             title: "Xibet",
                             body: _eventController.text,
-                            duration: secondsDifferencefor_1d <= 0
-                                ? secondsDifferencefor_1d = 0
-                                : secondsDifferencefor_1d,
+                            duration: secondsDifferencefor_1d,
                             payload: "This is schedule data",
                           );
-                          addList();
-                          checkNotified();
+                          if (secondsDifferencefor_1d > 5) {
+                            addList('1 day before');
+                            checkNotified();
+                          }
                           _eventController.clear();
                           Navigator.pop(context);
                         },
@@ -280,7 +286,7 @@ class _CalenderState extends State<Calender> {
                             duration: secondsDifferencefor_ontime,
                             payload: "This is schedule data",
                           );
-                          addList();
+                          addList('On-time');
                           checkNotified();
                           _eventController.clear();
                           Navigator.pop(context);
@@ -294,7 +300,10 @@ class _CalenderState extends State<Calender> {
             },
           );
         },
-        child: const Text('+'),
+        child: const Text(
+          '+',
+          style: TextStyle(fontSize: 30, fontWeight: FontWeight.w400),
+        ),
       ),
       body: ListView(
         children: [
@@ -322,7 +331,6 @@ class _CalenderState extends State<Calender> {
                     builder: (context) {
                       return AlertDialog(
                         scrollable: true,
-                        title: const Text('Event Creator'),
                         content: Padding(
                           padding: const EdgeInsets.all(8),
                           child: Column(children: [
@@ -332,6 +340,9 @@ class _CalenderState extends State<Calender> {
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            const SizedBox(
+                              height: 20,
                             ),
                             ElevatedButton(
                               onPressed: () async {
@@ -357,11 +368,14 @@ class _CalenderState extends State<Calender> {
                     },
                   );
                 },
-                child: Text('Holidays')),
+                child: const Text(
+                  'Holidays',
+                  style: TextStyle(color: Color.fromARGB(255, 39, 5, 106)),
+                )),
           ),
           const SizedBox(
-      height: 20, // Adjust the height according to your preference
-    ),
+            height: 20, // Adjust the height according to your preference
+          ),
           const Text(
             'Sheduled Tasks',
             textAlign: TextAlign.center,
@@ -371,9 +385,9 @@ class _CalenderState extends State<Calender> {
               fontWeight: FontWeight.w400,
             ),
           ),
-         const SizedBox(
-      height: 20, // Adjust the height according to your preference
-    ),
+          const SizedBox(
+            height: 20, // Adjust the height according to your preference
+          ),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -397,9 +411,15 @@ class _CalenderState extends State<Calender> {
                   ),
                 ),
                 child: Card(
+                  color: const Color.fromARGB(255, 9, 6, 94),
                   elevation: 2,
                   child: ListTile(
-                    title: Text(stringList[index]),
+                    title: Text(
+                      stringList[index],
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               );

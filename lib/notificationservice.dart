@@ -20,7 +20,7 @@ class LocalNotifications {
         AndroidInitializationSettings('@mipmap/ic_launcher');
     final DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      onDidReceiveLocalNotification: (id, title, body, payload) =>null,
+      onDidReceiveLocalNotification: (id, title, body, payload) => null,
     );
     final LinuxInitializationSettings initializationSettingsLinux =
         LinuxInitializationSettings(defaultActionName: 'Open notification');
@@ -30,9 +30,8 @@ class LocalNotifications {
             iOS: initializationSettingsDarwin,
             linux: initializationSettingsLinux);
 
-    // request notification permissions 
+    // request notification permissions
 
-    
     _flutterLocalNotificationsPlugin.initialize(initializationSettings,
         onDidReceiveNotificationResponse: onNotificationTap,
         onDidReceiveBackgroundNotificationResponse: onNotificationTap);
@@ -84,7 +83,8 @@ class LocalNotifications {
     required int duration,
     required String payload,
   }) async {
-    tz.initializeTimeZones();
+    if (duration > 5) {
+      tz.initializeTimeZones();
     await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,
@@ -101,6 +101,7 @@ class LocalNotifications {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         payload: payload);
+    }
   }
 
   // close a specific channel notification
