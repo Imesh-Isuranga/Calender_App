@@ -4,4 +4,4 @@ A new Flutter project.
 
 ## Screenshots
 
-![App Screenshot](https://raw.githubusercontent.com/Imesh-Isuranga/Calender_App/main/Calender%20app.jpg)
+![App Screenshot](https://raw.githubusercontent.com/Imesh-Isuranga/Calender_App/main/Calender%20app.png)
