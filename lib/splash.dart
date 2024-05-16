@@ -48,9 +48,13 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: ScaleTransition(
           scale: _animation,
-          child: const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: FlutterLogo(size: 150.0),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Image.asset(
+                  'assets/1.png',
+                  width: 150.0, // Set width as needed
+                  height: 150.0, // Set height as needed
+                ),
           ),
         ),
       ),
